@@ -3,3 +3,5 @@ config.ini
 .git/
 env/
 backend_school/__pycache__/
+citizens/__pycache__/
+citizens/migrations/__pycache__/
