@@ -1,6 +1,7 @@
 import json
 from collections import Counter
 from datetime import datetime
+from json import JSONDecodeError
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
@@ -70,7 +71,10 @@ class ImportsView(View):
         return True
 
     def post(self, request, *args, **kwargs):
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except JSONDecodeError:
+            return EncodedJsonResponse({}, status=400)
 
         if not self.is_valid(data):
             return EncodedJsonResponse({}, status=400)
@@ -197,7 +201,7 @@ class ImportsView(View):
 
     def is_valid_date(self, date):
         """
-        Check if date is valid date or not.
+        Check if date has valid format or not.
         """
         if not isinstance(date, str):
             return False

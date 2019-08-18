@@ -1,3 +1,7 @@
 from django.test import TestCase
+from django.urls import reverse
 
-# Create your tests here.
+
+class ImportsTest(TestCase):
+    def test_citizen_id(self):
+        response = self.client.post(reverse('citizens:imports'), {'citizens': ''}, content_type='application/json')
