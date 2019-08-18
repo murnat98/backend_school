@@ -1,7 +1,7 @@
 from django.urls import path
 
-from citizens.views import Imports
+from citizens.views import ImportsView
 
 urlpatterns = [
-    path('imports/', Imports.as_view())
+    path('imports/', ImportsView.as_view())
 ]
