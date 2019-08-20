@@ -1,0 +1,70 @@
+{
+  "citizens": [
+    {
+      "citizen_id": 2,
+      "town": "Москва",
+      "street": "Льва Толстого",
+      "building": "16к7стр5",
+      "apartment": 7,
+      "name": "Иванов Иван Иванович",
+      "birth_date": "26.12.1986",
+      "gender": "male",
+      "relatives": [3, 4, 5]
+    },
+    {
+      "citizen_id": 5,
+      "town": "Москва",
+      "street": "Льва Толстого",
+      "building": "16к7стр5",
+      "apartment": 11,
+      "name": "Иванов Сергей Иванович",
+      "birth_date": "01.04.1997",
+      "gender": "male",
+      "relatives": [2]
+    },
+    {
+      "citizen_id": 1,
+      "town": "Керчь",
+      "street": "Иосифа Бродского",
+      "building": "2",
+      "apartment": 11,
+      "name": "Романова Мария Леонидовна",
+      "birth_date": "23.11.1986",
+      "gender": "female",
+      "relatives": [4, 6]
+    },
+    {
+      "citizen_id": 6,
+      "town": "Керчь",
+      "street": "Иосифа Бродского",
+      "building": "2",
+      "apartment": 11,
+      "name": "Романова Мария Леонидовна",
+      "birth_date": "23.11.1986",
+      "gender": "female",
+      "relatives": [1]
+    },
+    {
+      "citizen_id": 4,
+      "town": "Керчь",
+      "street": "Иосифа Бродского",
+      "building": "2",
+      "apartment": 11,
+      "name": "Романова Мария Леонидовна",
+      "birth_date": "23.11.1986",
+      "gender": "female",
+      "relatives": [2, 1]
+    },
+    {
+      "citizen_id": 3,
+      "town": "Керчь",
+      "street": "Иосифа Бродского",
+      "building": "2",
+      "apartment": 11,
+      "name": "Романова Мария Леонидовна",
+      "birth_date": "23.11.1986",
+      "gender": "female",
+      "relatives": [2]
+    }
+  ]
+}
