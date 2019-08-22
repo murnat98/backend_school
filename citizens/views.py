@@ -371,7 +371,8 @@ class CitizensList(View):
 
         return EncodedJsonResponse({'data': data}, status=200)
 
-    def get_all_relatives(self, import_id, citizen_id):
+    @staticmethod
+    def get_all_relatives(import_id, citizen_id):
         """
         Get list of all relatives of citizen.
         """
