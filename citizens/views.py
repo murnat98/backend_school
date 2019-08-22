@@ -356,3 +356,31 @@ class ChangeImports(View):
         Relatives.objects.bulk_create(relative_instances)
 
         return True
+
+
+class CitizensList(View):
+    def get(self, request, *args, **kwargs):
+        import_id = kwargs['import_id']
+        citizens = Citizens.objects.filter(import_id=import_id)
+
+        data = []
+        for citizen in citizens:
+            model_dict = model_to_dict(citizen, exclude=('id', 'import_id'))
+            model_dict.update({'relatives': self.get_all_relatives(import_id, citizen.id)})
+            data.append(model_dict)
+
+        return EncodedJsonResponse({'data': data}, status=200)
+
+    def get_all_relatives(self, import_id, citizen_id):
+        """
+        Get list of all relatives of citizen.
+        """
+        relatives = Relatives.objects.filter(import_id=import_id, citizen_1_id=citizen_id)
+        relatives |= Relatives.objects.filter(import_id=import_id, citizen_2_id=citizen_id)
+
+        relatives_list = []
+        for relative in relatives:
+            citizen = relative.citizen_2_id if relative.citizen_1_id_id == citizen_id else relative.citizen_1_id
+            relatives_list.append(citizen.citizen_id)
+
+        return relatives_list
