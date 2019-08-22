@@ -293,7 +293,7 @@ class ChangeImports(View):
         response_content = model_to_dict(citizen, exclude=('id', 'import_id'))
         response_content.update({'relatives': data['relatives']})
 
-        return EncodedJsonResponse(response_content, status=200)
+        return EncodedJsonResponse({'data': response_content}, status=200)
 
     @staticmethod
     def is_valid_citizen(citizen):
