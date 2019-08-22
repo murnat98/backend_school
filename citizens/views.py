@@ -81,6 +81,10 @@ class CitizenFields:
         return True
 
     @classmethod
+    def check_citizen_id(cls, value):
+        return cls.is_valid_int(value)
+
+    @classmethod
     def check_town(cls, value):
         return cls.is_valid_str_alnum(value)
 
@@ -106,7 +110,7 @@ class CitizenFields:
 
     @classmethod
     def check_gender(cls, value):
-        if value != 'male' or value != 'female':
+        if value != 'male' and value != 'female':
             return False
 
         return True
@@ -124,6 +128,46 @@ class CitizenFields:
 
 
 class ImportsView(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except JSONDecodeError:
+            return EncodedJsonResponse({}, status=400)
+
+        if not self.is_valid(data):
+            return EncodedJsonResponse({}, status=400)
+
+        import_inst = Imports()
+        import_inst.save()
+
+        citizens = data['citizens']
+        citizens_list = {}
+
+        for citizen in citizens:
+            relatives_tmp = citizen.pop('relatives')
+            citizen_inst = Citizens(**citizen, import_id=import_inst)
+
+            try:
+                citizen_inst.save()
+            except DataError:
+                import_inst.delete()
+                return EncodedJsonResponse({}, status=400)
+
+            citizens_list.update({citizen['citizen_id']: citizen_inst})
+            citizen['relatives'] = relatives_tmp
+
+        relative_pairs = self.get_relative_pairs(citizens, citizens_list)
+
+        relative_instances = []
+        for relative_pair in relative_pairs:
+            relative_instances.append(
+                Relatives(citizen_1_id=relative_pair[0], citizen_2_id=relative_pair[1], import_id=import_inst)
+            )
+
+        Relatives.objects.bulk_create(relative_instances)
+
+        return EncodedJsonResponse({'data': {'import_id': import_inst.id}}, status=201)
+
     def is_valid(self, data):
         """
         Check if passed data corresponds requested rules.
@@ -170,43 +214,34 @@ class ImportsView(View):
 
         return True
 
-    def post(self, request, *args, **kwargs):
-        try:
-            data = json.loads(request.body)
-        except JSONDecodeError:
-            return EncodedJsonResponse({}, status=400)
+    @staticmethod
+    def citizen_is_valid(citizen):
+        """
+        Check if citizen dict is valid.
+        """
+        required_fields = (
+            'citizen_id', 'town', 'street', 'building', 'apartment', 'name', 'birth_date', 'gender', 'relatives'
+        )
 
-        if not self.is_valid(data):
-            return EncodedJsonResponse({}, status=400)
+        if not isinstance(citizen, dict):
+            return False
 
-        import_inst = Imports()
-        import_inst.save()
+        for field in required_fields:
+            if field not in citizen:
+                return False
 
-        citizens = data['citizens']
-        citizens_list = {}
+            check_function = getattr(CitizenFields, 'check_%s' % field)
 
-        for citizen in citizens:
-            relatives_tmp = citizen.pop('relatives')
-            citizen_inst = Citizens(**citizen, import_id=import_inst)
+            if not check_function(citizen[field]):
+                return False
 
-            try:
-                citizen_inst.save()
-            except DataError:
-                return EncodedJsonResponse({}, status=400)  # TODO: do not save to db (import), if error.
+        if len(citizen) != 9:
+            return False
 
-            citizens_list.update({citizen['citizen_id']: citizen_inst})
-            citizen['relatives'] = relatives_tmp
+        return True
 
-        relative_pairs = self.get_relative_pairs(citizens, citizens_list)
-
-        for relative_pair in relative_pairs:
-            relative_inst = Relatives(citizen_1_id=relative_pair[0], citizen_2_id=relative_pair[1],
-                                      import_id=import_inst)
-            relative_inst.save()  # TODO: bulk create.
-
-        return EncodedJsonResponse({'data': {'import_id': import_inst.id}}, status=201)
-
-    def get_relative_pairs(self, citizens, citizens_list):
+    @staticmethod
+    def get_relative_pairs(citizens, citizens_list):
         """
         Get list of relative pairs.
         """
@@ -221,102 +256,6 @@ class ImportsView(View):
                     relative_pairs.append((citizens_list[citizen_id], citizens_list[relative]))
 
         return relative_pairs
-
-    def citizen_is_valid(self, citizen):
-        """
-        Check if citizen dict is valid.
-        TODO: optimize this code.
-        """
-        if not isinstance(citizen, dict):
-            return False
-
-        if 'citizen_id' not in citizen:
-            return False
-
-        if not self.is_valid_int(citizen['citizen_id']):
-            return False
-
-        if 'town' not in citizen:
-            return False
-
-        if not self.is_valid_str(citizen['town']):
-            return False
-
-        if 'street' not in citizen:
-            return False
-
-        if not self.is_valid_str(citizen['street']):
-            return False
-
-        if 'building' not in citizen:
-            return False
-
-        if not self.is_valid_str(citizen['building']):
-            return False
-
-        if 'apartment' not in citizen:
-            return False
-
-        if not self.is_valid_int(citizen['apartment']):
-            return False
-
-        if 'name' not in citizen:
-            return False
-
-        if not self.is_valid_str(citizen['name']):
-            return False
-
-        if 'birth_date' not in citizen:
-            return False
-
-        if not self.is_valid_date(citizen['birth_date']):
-            return False
-
-        if 'gender' not in citizen:
-            return False
-
-        if not self.is_valid_str(citizen['gender']) or (citizen['gender'] != 'male' and citizen['gender'] != 'female'):
-            return False
-
-        if 'relatives' not in citizen:
-            return False
-
-        if len(citizen) != 9:
-            return False
-
-        return True
-
-    def is_valid_str(self, string):
-        """
-        Check if string is instance of str and the length is more than 0.
-        """
-        if not isinstance(string, str) or len(string) <= 0:
-            return False
-
-        return True
-
-    def is_valid_int(self, integer):
-        """
-        Check if integer is instance of int and the number is not negative.
-        """
-        if not isinstance(integer, int) or integer < 0:
-            return False
-
-        return True
-
-    def is_valid_date(self, date):
-        """
-        Check if date has valid format or not.
-        """
-        if not isinstance(date, str):
-            return False
-
-        try:
-            datetime.strptime(date, '%d.%m.%Y')
-        except ValueError:
-            return False
-
-        return True
 
 
 class ChangeImports(View):
