@@ -8,6 +8,7 @@ from django.db import DataError
 from django.forms import model_to_dict
 from django.http import JsonResponse
 from django.views import View
+from numpy import percentile
 
 from citizens.models import Imports, Citizens, Relatives
 
@@ -420,3 +421,50 @@ class CitizenBirthdaysStat(View):
                     presents.append({'citizen_id': relative, 'presents': 1})
 
         return EncodedJsonResponse({'data': data}, status=200)
+
+
+class CitizensTownsStatPercentileAge(View):
+    def get(self, request, *args, **kwargs):
+        import_id = kwargs['import_id']
+        data = []
+
+        citizens = Citizens.objects.filter(import_id=import_id).order_by('town').values('birth_date', 'town')
+
+        current_town = ''
+        years_list = []
+        for citizen in citizens:
+            town = citizen['town']
+
+            if current_town == town:
+                years_list.append(self.count_year(citizen['birth_date']))
+            else:
+                if current_town != '':
+                    data.append(self.count_percentiles(years_list, current_town))
+                years_list = [self.count_year(citizen['birth_date'])]
+                current_town = town
+
+        data.append(self.count_percentiles(years_list, current_town))
+
+        return EncodedJsonResponse({'data': data}, status=200)
+
+    @staticmethod
+    def count_year(date):
+        """
+        Count the years between today and the given str date.
+        """
+        date_obj = datetime.strptime(date, '%d.%m.%Y')
+        difference = datetime.utcnow() - date_obj
+        total_seconds = difference.total_seconds()
+
+        return total_seconds / 60 / 60 / 24 / 365.25
+
+    def count_percentiles(self, years_list, town):
+        """
+        Return dict of percentiles p50, p75, p99 in the below format:
+        {'town': town, 'p50': p50, 'p75': p75, 'p99': p99}
+        """
+        p50 = percentile(years_list, 50, interpolation='linear')
+        p75 = percentile(years_list, 75, interpolation='linear')
+        p99 = percentile(years_list, 99, interpolation='linear')
+
+        return {'town': town, 'p50': p50, 'p75': p75, 'p99': p99}
