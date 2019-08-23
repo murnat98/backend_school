@@ -69,6 +69,7 @@ class CitizenFields:
     def is_valid_date(date):
         """
         Check if date has valid format or not.
+        TODO: check if date is less than today.
         """
         if not isinstance(date, str):
             return False
@@ -385,3 +386,37 @@ class CitizensList(View):
             relatives_list.append(citizen.citizen_id)
 
         return relatives_list
+
+
+class CitizenBirthdaysStat(View):
+    def get(self, request, *args, **kwargs):
+        import_id = kwargs['import_id']
+        citizens = Citizens.objects.filter(import_id=import_id).values('id', 'birth_date')
+
+        data = {
+            '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': [], '8': [], '9': [], '10': [], '11': [],
+            '12': []
+        }
+
+        for citizen in citizens:
+            birth_date_str = citizen['birth_date']
+            birth_date = datetime.strptime(birth_date_str, '%d.%m.%Y')
+            month = str(birth_date.month)
+
+            relatives = CitizensList.get_all_relatives(import_id, citizen['id'])
+
+            presents = data[month]
+
+            for relative in relatives:
+                present_found = False
+                for present in presents:
+                    if present['citizen_id'] == relative:
+                        presents_count = present['presents']
+                        present['presents'] = presents_count + 1
+                        present_found = True
+                        break
+
+                if not present_found:
+                    presents.append({'citizen_id': relative, 'presents': 1})
+
+        return EncodedJsonResponse({'data': data}, status=200)
