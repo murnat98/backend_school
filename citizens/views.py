@@ -458,7 +458,8 @@ class CitizensTownsStatPercentileAge(View):
 
         return total_seconds / 60 / 60 / 24 / 365.25
 
-    def count_percentiles(self, years_list, town):
+    @staticmethod
+    def count_percentiles(years_list, town):
         """
         Return dict of percentiles p50, p75, p99 in the below format:
         {'town': town, 'p50': p50, 'p75': p75, 'p99': p99}
