@@ -468,4 +468,4 @@ class CitizensTownsStatPercentileAge(View):
         p75 = percentile(years_list, 75, interpolation='linear')
         p99 = percentile(years_list, 99, interpolation='linear')
 
-        return {'town': town, 'p50': p50, 'p75': p75, 'p99': p99}
+        return {'town': town, 'p50': float('%.2f' % p50), 'p75': float('%.2f' % p75), 'p99': float('%.2f' % p99)}
