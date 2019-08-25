@@ -1,6 +1,6 @@
 import json
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, date
 from json import JSONDecodeError
 
 from django.core.serializers.json import DjangoJSONEncoder
@@ -67,17 +67,19 @@ class CitizenFields:
         return True
 
     @staticmethod
-    def is_valid_date(date):
+    def is_valid_date(birth_date):
         """
         Check if date has valid format or not.
-        TODO: check if date is less than today.
         """
-        if not isinstance(date, str):
+        if not isinstance(birth_date, str):
             return False
 
         try:
-            datetime.strptime(date, '%d.%m.%Y')
+            date_obj = datetime.strptime(birth_date, '%d.%m.%Y').date()
         except ValueError:
+            return False
+
+        if date_obj >= date.today():
             return False
 
         return True
