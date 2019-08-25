@@ -8,11 +8,11 @@ class Imports(models.Model):
 class Citizens(models.Model):
     import_id = models.ForeignKey('citizens.Imports', on_delete=models.CASCADE, related_name='import_id')
     citizen_id = models.PositiveIntegerField()
-    town = models.CharField(max_length=255)
-    street = models.CharField(max_length=255)
-    building = models.CharField(max_length=255)
+    town = models.CharField(max_length=256)
+    street = models.CharField(max_length=256)
+    building = models.CharField(max_length=256)
     apartment = models.PositiveIntegerField()
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=256)
     birth_date = models.CharField(max_length=20)
     gender = models.CharField(max_length=10, choices=(('male', 'male'), ('female', 'female')))
 
