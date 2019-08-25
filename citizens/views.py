@@ -354,13 +354,12 @@ class ChangeImports(View):
             if not citizen_2_id_found:
                 return None
 
-            citizen_2 = Citizens(pk=citizen_2_id)  # TODO: try to optimize here (do not go to database)
+            citizen_2 = Citizens(pk=citizen_2_id)
 
             relative_instances.append(
                 Relatives(import_id=import_inst, citizen_1_id=citizen_1, citizen_2_id=citizen_2)
             )
 
-        # Relatives.objects.bulk_create(relative_instances)
         return relative_instances
 
 

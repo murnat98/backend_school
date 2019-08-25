@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from backend_school import settings
-from citizens.models import Citizens, Relatives
+from citizens.models import Citizens, Relatives, Imports
 
 
 class ImportsTest(TestCase):
@@ -36,12 +36,21 @@ class ImportsTest(TestCase):
         """
         return os.listdir(os.path.join(settings.BASE_DIR, 'citizens', 'test_data', 'wrong_data'))
 
-    def test_wrong_data(self):  # TODO: check database info
+    def test_wrong_data(self):
         test_files = self.get_wrong_files_list()
 
         for test_file in test_files:
             response = self.imports_post('wrong_data/%s' % test_file)
             self.assertEqual(response.status_code, 400, msg=test_file)
+
+            all_citizens = list(Citizens.objects.all().values())
+            self.assertEqual(len(all_citizens), 0, msg='Some data written to citizens database')
+
+            all_imports = list(Imports.objects.all().values())
+            self.assertEqual(len(all_imports), 0, msg='Some data written to imports database')
+
+            all_relatives = list(Relatives.objects.all().values())
+            self.assertEqual(len(all_relatives), 0, msg='Some data written to relatives database')
 
     def test_right_data(self):
         response = self.imports_post('test_right_data.json')
@@ -52,11 +61,29 @@ class ImportsTest(TestCase):
         self.assertIn('data', content)
         self.assertIn('import_id', content['data'])
 
+        import_id = content['data']['import_id']
+
+        try:
+            Imports.objects.get(import_id=import_id)
+        except Imports.DoesNotExist:
+            self.fail('DoesNotExist raised')
+
+        try:
+            citizens = list(Citizens.objects.filter(import_id=import_id).values())
+        except Citizens.DoesNotExist:
+            self.fail('DoesNotExist raised')
+
+        self.assertEqual(len(citizens), 6)
+
+        try:
+            relatives = list(Relatives.objects.filter(import_id=import_id).values())
+        except Relatives.DoesNotExist:
+            self.fail('DoesNotExist raised')
+
+        self.assertEqual(len(relatives), 5)
+
 
 class ChangeCitizensTest(TestCase):
-    """
-    TODO: optimize!
-    """
     def setUp(self):
         response = self.client.post(reverse('citizens:imports'),
                                     ImportsTest.get_data_from_file('test_right_data.json'),
