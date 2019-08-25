@@ -284,15 +284,18 @@ class ChangeImports(View):
             if field_name != 'relatives':
                 setattr(citizen, field_name, value)
 
-        try:
-            citizen.save()
-        except DataError:
-            return EncodedJsonResponse({}, status=400)
-
         if 'relatives' in data:
             self.delete_old_relatives(import_id, citizen.id)
-            if not self.add_new_relatives(import_id, citizen.id, data['relatives']):
-                return EncodedJsonResponse({}, status=400)  # TODO: do not save to database if there is an error
+            relatives = self.add_new_relatives(import_id, citizen.id, data['relatives'])
+            if relatives is None:
+                return EncodedJsonResponse({}, status=400)
+            else:
+                try:
+                    citizen.save()
+                except DataError:
+                    return EncodedJsonResponse({}, status=400)
+
+                Relatives.objects.bulk_create(relatives)
 
         response_content = model_to_dict(citizen, exclude=('id', 'import_id'))
         response_content.update({'relatives': data['relatives']})
@@ -349,7 +352,7 @@ class ChangeImports(View):
                     break
 
             if not citizen_2_id_found:
-                return False
+                return None
 
             citizen_2 = Citizens(pk=citizen_2_id)  # TODO: try to optimize here (do not go to database)
 
@@ -357,9 +360,8 @@ class ChangeImports(View):
                 Relatives(import_id=import_inst, citizen_1_id=citizen_1, citizen_2_id=citizen_2)
             )
 
-        Relatives.objects.bulk_create(relative_instances)
-
-        return True
+        # Relatives.objects.bulk_create(relative_instances)
+        return relative_instances
 
 
 class CitizensList(View):
