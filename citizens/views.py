@@ -368,6 +368,9 @@ class CitizensList(View):
         import_id = kwargs['import_id']
         citizens = Citizens.objects.filter(import_id=import_id)
 
+        if citizens.count() == 0:
+            return EncodedJsonResponse({}, status=404)
+
         data = []
         for citizen in citizens:
             model_dict = model_to_dict(citizen, exclude=('id', 'import_id'))
@@ -396,6 +399,9 @@ class CitizenBirthdaysStat(View):
     def get(self, request, *args, **kwargs):
         import_id = kwargs['import_id']
         citizens = Citizens.objects.filter(import_id=import_id).values('id', 'birth_date')
+
+        if citizens.count() == 0:
+            return EncodedJsonResponse({}, status=404)
 
         data = {
             '1': [], '2': [], '3': [], '4': [], '5': [], '6': [], '7': [], '8': [], '9': [], '10': [], '11': [],

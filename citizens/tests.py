@@ -140,11 +140,76 @@ class ChangeCitizensTest(TestCase):
             citizen_1_id = relative.citizen_1_id
             citizen_2_id = relative.citizen_2_id
 
-            relative_id = 0
-
             if citizen_1_id == citizen.id:
                 relative_id = citizen_2_id
             else:
                 relative_id = citizen_1_id
 
             self.assertIn(relative_id, new_relatives)
+
+
+class CitizensListTest(TestCase):
+    def setUp(self):
+        response = self.client.post(
+            reverse('citizens:imports'), ImportsTest.get_data_from_file('test_right_data.json'),
+            content_type='application/json'
+        )
+
+        self.import_id = response.content['data']['import_id']
+
+    def test_wrong_request(self):
+        response = self.client.get(reverse('citizens:list', kwargs={'import_id': self.import_id + 1}),
+                                   content_type='application/json')
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_right_request(self):
+        response = self.client.get(reverse('citizens:list', kwargs={'import_id': self.import_id}),
+                                   content_type='application/json')
+
+        self.assertEqual(response.status_code, 200)
+        content = json.loads(response.content)
+        self.assertIn('data', content)
+        data = content['data']
+        self.assertIsInstance(data, (list, tuple))
+        self.assertEqual(len(data), 6)
+
+
+class CitizensBirthDayStat(TestCase):
+    def setUp(self):
+        response = self.client.post(reverse('citizens:imports'), ImportsTest.get_data_from_file('test_right_data.json'),
+                                    content_type='application/json')
+
+        self.import_id = response['data']['import_id']
+
+    def test_wrong_birthdays(self):
+        response = self.client.get(reverse('citizens:birthdays', kwargs={'import_id': self.import_id}),
+                                   content_type='application/json')
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_right_birthdays(self):
+        response = self.client.get(reverse('citizens:birthdays', kwargs={'import_id': self.import_id}),
+                                   content_type='application/json')
+
+        self.assertEqual(response.status_code, 200)
+
+        data = json.loads(response.content)
+        self.assertIn('data', data)
+        birthdays = data['data']
+
+        empty_birthdays = ('1', '2', '3', '5', '6', '7', '8', '9', '10')
+
+        for birthday in empty_birthdays:
+            self.assertEqual(len(birthdays[birthday]), 0)
+
+        april_presents = birthdays['4']
+        november_presents = birthdays['11']
+        december_presents = birthdays['12']
+
+        self.assertEqual(len(april_presents), 1)
+        self.assertEqual(april_presents[0]['citizen_id'], 2)
+        self.assertEqual(april_presents[0]['presents'], 1)
+
+        self.assertEqual(len(november_presents), 4)
+        self.assertEqual(len(december_presents), 2)
