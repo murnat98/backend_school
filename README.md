@@ -42,14 +42,14 @@ port =
 #### Run the tests
 
 ```
+./manage.py migrate
 ./manage.py test
 ```
 
 #### Run the project
 
-Run the following commands in the project root
+Run the following command in the project root to run the REST API
 
 ```
-./manage.py migrate
 gunicorn -b 0.0.0.0:8080 backend_school.wsgi
 ```
