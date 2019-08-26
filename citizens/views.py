@@ -295,7 +295,12 @@ class ChangeImports(View):
                 except DataError:
                     return EncodedJsonResponse({}, status=400)
 
-                Relatives.objects.bulk_create(relatives)
+            Relatives.objects.bulk_create(relatives)
+        else:
+            try:
+                citizen.save()
+            except DataError:
+                return EncodedJsonResponse({}, status=400)
 
         response_content = model_to_dict(citizen, exclude=('id', 'import_id'))
         if 'relatives' in data:

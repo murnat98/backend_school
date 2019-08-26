@@ -8,7 +8,6 @@ from backend_school import settings
 from citizens.models import Citizens, Relatives, Imports
 
 
-# TODO: TEST!
 class ImportsTest(TestCase):
     @staticmethod
     def get_data_from_file(filename):
@@ -65,7 +64,7 @@ class ImportsTest(TestCase):
         import_id = content['data']['import_id']
 
         try:
-            Imports.objects.get(import_id=import_id)
+            Imports.objects.get(pk=import_id)
         except Imports.DoesNotExist:
             self.fail('DoesNotExist raised')
 
@@ -126,7 +125,7 @@ class ChangeCitizensTest(TestCase):
 
         response = self.client.patch(
             reverse('citizens:change_imports', kwargs={'import_id': self.import_id, 'citizen_id': 2}),
-            {"relatives": new_relatives}
+            {'relatives': new_relatives}
         )
 
         content = json.loads(response.content)
@@ -143,11 +142,11 @@ class ChangeCitizensTest(TestCase):
             citizen_2_id = relative.citizen_2_id
 
             if citizen_1_id == citizen.id:
-                relative_id = citizen_2_id
-            else:
                 relative_id = citizen_1_id
+            else:
+                relative_id = citizen_2_id
 
-            self.assertIn(relative_id, new_relatives)
+            self.assertIn(relative_id.citizen_id, new_relatives)
 
 
 class CitizensListTest(TestCase):
@@ -157,7 +156,8 @@ class CitizensListTest(TestCase):
             content_type='application/json'
         )
 
-        self.import_id = response.content['data']['import_id']
+        content = json.loads(response.content)
+        self.import_id = content['data']['import_id']
 
     def test_wrong_request(self):
         response = self.client.get(reverse('citizens:list', kwargs={'import_id': self.import_id + 1}),
@@ -182,10 +182,11 @@ class CitizensBirthDayStat(TestCase):
         response = self.client.post(reverse('citizens:imports'), ImportsTest.get_data_from_file('test_right_data.json'),
                                     content_type='application/json')
 
-        self.import_id = response['data']['import_id']
+        content = json.loads(response.content)
+        self.import_id = content['data']['import_id']
 
     def test_wrong_birthdays(self):
-        response = self.client.get(reverse('citizens:birthdays', kwargs={'import_id': self.import_id}),
+        response = self.client.get(reverse('citizens:birthdays', kwargs={'import_id': self.import_id + 1}),
                                    content_type='application/json')
 
         self.assertEqual(response.status_code, 404)
@@ -214,4 +215,4 @@ class CitizensBirthDayStat(TestCase):
         self.assertEqual(april_presents[0]['presents'], 1)
 
         self.assertEqual(len(november_presents), 4)
-        self.assertEqual(len(december_presents), 2)
+        self.assertEqual(len(december_presents), 3)
