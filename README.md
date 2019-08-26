@@ -13,6 +13,7 @@
 Run following instructions
 
 ```
+git clone https://github.com/murnat98/backend_school.git
 cd /path/to/project/
 python3.6 -m venv env
 source /env/bin/activate
