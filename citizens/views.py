@@ -134,7 +134,7 @@ class CitizenFields:
 class ImportsView(View):
     def post(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = json.loads(request.body.decode('utf-8').replace('\'', '\"'))
         except JSONDecodeError:
             return EncodedJsonResponse({}, status=400)
 
@@ -265,7 +265,7 @@ class ImportsView(View):
 class ChangeImports(View):
     def patch(self, request, *args, **kwargs):
         try:
-            data = json.loads(request.body)
+            data = json.loads(request.body.decode('utf-8').replace('\'', '\"'))
         except JSONDecodeError:
             return EncodedJsonResponse({}, status=400)
 
@@ -298,7 +298,10 @@ class ChangeImports(View):
                 Relatives.objects.bulk_create(relatives)
 
         response_content = model_to_dict(citizen, exclude=('id', 'import_id'))
-        response_content.update({'relatives': data['relatives']})
+        if 'relatives' in data:
+            response_content.update({'relatives': data['relatives']})
+        else:
+            response_content.update({'relatives': CitizensList.get_all_relatives(import_id, citizen.id)})
 
         return EncodedJsonResponse({'data': response_content}, status=200)
 

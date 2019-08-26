@@ -8,6 +8,7 @@ from backend_school import settings
 from citizens.models import Citizens, Relatives, Imports
 
 
+# TODO: TEST!
 class ImportsTest(TestCase):
     @staticmethod
     def get_data_from_file(filename):
@@ -89,7 +90,8 @@ class ChangeCitizensTest(TestCase):
                                     ImportsTest.get_data_from_file('test_right_data.json'),
                                     content_type='application/json')
 
-        self.import_id = response.content['data']['import_id']
+        content = json.loads(response.content)
+        self.import_id = content['data']['import_id']
 
     def test_fields(self):
         response = self.client.patch(
@@ -120,14 +122,14 @@ class ChangeCitizensTest(TestCase):
         self.assertEqual(citizen_instance.name, 'Иванов Иван Иванович')
 
     def test_relatives(self):
-        new_relatives = (3, 4)
+        new_relatives = [3, 4]
 
         response = self.client.patch(
             reverse('citizens:change_imports', kwargs={'import_id': self.import_id, 'citizen_id': 2}),
-            {'relatives': new_relatives}
+            {"relatives": new_relatives}
         )
 
-        content = response.content
+        content = json.loads(response.content)
 
         self.assertEqual(content['data']['relatives'], new_relatives)
 
