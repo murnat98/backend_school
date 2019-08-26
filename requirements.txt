@@ -1,5 +1,6 @@
 configparser==3.8.1
 Django==2.2.4
+gunicorn==19.9.0
 numpy==1.17.0
 psycopg2==2.8.3
 pytz==2019.2
